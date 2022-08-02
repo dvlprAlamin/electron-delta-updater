@@ -6,7 +6,7 @@ const crypto = require('crypto');
 const fs = require('fs-extra');
 const fetch = require('cross-fetch');
 const semver = require('semver');
-const { spawnSync, execFile } = require('child_process');
+const { spawnSync, execFile, execSync } = require('child_process');
 const yaml = require('yaml');
 
 const { downloadFile, niceBytes } = require('./download');
@@ -51,6 +51,10 @@ const isSHACorrect = (filePath, correctSHA) => {
   }
 };
 
+const stripTrailingSlash = (str) => (str.endsWith('/')
+  ? str.slice(0, -1)
+  : str);
+
 class DeltaUpdater extends EventEmitter {
   constructor(options) {
     super();
@@ -62,7 +66,7 @@ class DeltaUpdater extends EventEmitter {
     if (app.isPackaged) {
       this.setConfigPath();
       this.prepareUpdater();
-      this.appPath = path.dirname(app.getPath('exe'));
+      this.appPath = stripTrailingSlash(path.dirname(app.getPath('exe')));
       this.appName = getAppName();
       this.logger.info('[Updater] App path = ', this.appPath);
     }
@@ -129,7 +133,7 @@ class DeltaUpdater extends EventEmitter {
 
   checkForUpdates(resolve, reject) {
     this.logger.log('[Updater] Checking for updates...');
-    if (this.updateConfig && this.updateConfig.provider === 'github') {
+    if (!this.hostURL && this.updateConfig && this.updateConfig.provider === 'github') {
       // special case for github, we need to get the latest release as delta-win/mac.json is
       // hosted at the root of the new release eg:
       // https://github.com/${owner}/${repo}/releases/download/${latestReleaseTagName}/delta-{win/mac}.json
@@ -292,9 +296,8 @@ class DeltaUpdater extends EventEmitter {
       if (this.autoUpdateInfo.delta) {
         if (process.platform === 'win32') {
           try {
-            this.logger.log(this.autoUpdateInfo.deltaPath, [`/appPath=${this.appPath}`, '/norestart=1']);
-            spawnSync(this.autoUpdateInfo.deltaPath, [`/appPath=${this.appPath}`, '/norestart=1'], {
-              detached: true,
+            this.logger.log(this.autoUpdateInfo.deltaPath, [`/APPPATH="${this.appPath}"`, '/RESTART="0"']);
+            execSync(`${this.autoUpdateInfo.deltaPath} /APPPATH="${this.appPath}" /RESTART="0"`, {
               stdio: 'ignore',
             });
           } catch (err) {
@@ -373,7 +376,7 @@ class DeltaUpdater extends EventEmitter {
     splashScreen,
   }) {
     this.logger.info('[Updater] Booting');
-    if (!this.hostURL && process.platform === 'win32') {
+    if (!this.hostURL) {
       this.hostURL = await this.guessHostURL();
     }
 
@@ -470,20 +473,21 @@ class DeltaUpdater extends EventEmitter {
       this.autoUpdater.downloadUpdate();
       return;
     }
-
-    try {
-      const macUpdaterURL = newUrlFromBase('mac-updater', this.hostURL);
-      const hpatchzURL = newUrlFromBase('hpatchz', this.hostURL);
-      this.logger.info('[Updater] Downloading mac-updater and hpatchz');
-      this.logger.info(`${macUpdaterURL} and ${hpatchzURL}`);
-      await downloadFile(macUpdaterURL, this.macUpdaterPath);
-      await downloadFile(hpatchzURL, this.hpatchzPath);
-      await fs.chmod(this.macUpdaterPath, '755');
-      await fs.chmod(this.hpatchzPath, '755');
-    } catch (err) {
-      this.logger.error('[Updater] Error downloading updater helper files', err);
-      this.autoUpdater.downloadUpdate();
-      return;
+    if (process.platform === 'darwin') {
+      try {
+        const macUpdaterURL = newUrlFromBase('mac-updater', this.hostURL);
+        const hpatchzURL = newUrlFromBase('hpatchz', this.hostURL);
+        this.logger.info('[Updater] Downloading mac-updater and hpatchz');
+        this.logger.info(`${macUpdaterURL} and ${hpatchzURL}`);
+        await downloadFile(macUpdaterURL, this.macUpdaterPath);
+        await downloadFile(hpatchzURL, this.hpatchzPath);
+        await fs.chmod(this.macUpdaterPath, '755');
+        await fs.chmod(this.hpatchzPath, '755');
+      } catch (err) {
+        this.logger.error('[Updater] Error downloading updater helper files', err);
+        this.autoUpdater.downloadUpdate();
+        return;
+      }
     }
 
     const deltaPath = path.join(this.deltaHolderPath, deltaDetails.path);
@@ -556,9 +560,8 @@ class DeltaUpdater extends EventEmitter {
           this.hpatchzPath,
         ]).unref();
       } else {
-        this.logger.log(deltaPath, [`/appPath=${this.appPath}`]);
-        spawnSync(deltaPath, [`/appPath=${this.appPath}`], {
-          detached: true,
+        this.logger.log(deltaPath, [`/APPPATH="${this.appPath}"`, '/RESTART="1"']);
+        execSync(`${deltaPath} /APPPATH="${this.appPath}" /RESTART="1"`, {
           stdio: 'ignore',
         });
       }
