@@ -1,6 +1,6 @@
-const fs = require('fs-extra');
-const https = require('https');
-const http = require('http');
+import fs from 'fs-extra';
+import https from 'https';
+import http from 'http';
 
 const units = ['bytes', 'KB', 'MB', 'GB', 'TB', 'PB'];
 
@@ -74,4 +74,4 @@ function downloadFile(url, filePath, onProgressCb) {
   });
 }
 
-module.exports = { downloadFile, niceBytes };
+export default { downloadFile, niceBytes };

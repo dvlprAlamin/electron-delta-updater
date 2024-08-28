@@ -1,4 +1,4 @@
-function newBaseUrl(url) {
+export function newBaseUrl(url) {
   const result = new URL(url);
   if (!result.pathname.endsWith('/')) {
     result.pathname += '/';
@@ -6,9 +6,7 @@ function newBaseUrl(url) {
   return new URL(result).href;
 }
 
-function newUrlFromBase(pathname, baseUrl) {
+export function newUrlFromBase(pathname, baseUrl) {
   const result = new URL(pathname, baseUrl);
   return result.href;
 }
-
-module.exports = { newBaseUrl, newUrlFromBase };

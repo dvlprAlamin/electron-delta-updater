@@ -7,7 +7,7 @@ const getLatestReleaseTagName = async ({ owner, repo }) => {
   return json.tag_name || null;
 };
 
-const getGithubFeedURL = async ({ owner, repo }) => {
+export const getGithubFeedURL = async ({ owner, repo }) => {
   let githubFeedURL;
 
   try {
@@ -19,6 +19,3 @@ const getGithubFeedURL = async ({ owner, repo }) => {
   return githubFeedURL;
 };
 
-module.exports = {
-  getGithubFeedURL,
-};

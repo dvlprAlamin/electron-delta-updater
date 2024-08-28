@@ -1,6 +1,6 @@
-const { BrowserWindow } = require('electron');
-const path = require('path');
-const url = require('url');
+import { BrowserWindow } from 'electron';
+import path from 'path';
+import url from 'url';
 
 const MAIN_MESSAGE = '@electron-delta/updater:main';
 
@@ -38,4 +38,4 @@ function dispatchEvent(updaterWindow, eventName, payload) {
   }
 }
 
-module.exports = { getWindow, getStartURL, dispatchEvent };
+export default { getWindow, getStartURL, dispatchEvent };

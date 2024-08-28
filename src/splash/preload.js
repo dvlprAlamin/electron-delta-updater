@@ -1,4 +1,4 @@
-const { ipcRenderer } = require('electron');
+import { ipcRenderer } from 'electron';
 
 const RENDERER_MESSAGE = '@electron-delta/updater:renderer';
 const MAIN_MESSAGE = '@electron-delta/updater:main';

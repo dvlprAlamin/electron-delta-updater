@@ -1,21 +1,18 @@
-const { EventEmitter } = require('events');
-const electron = require('electron');
+import { EventEmitter } from 'events';
+import electron from 'electron';
+import path from 'path';
+import crypto from 'crypto';
+import fs from 'fs-extra';
+import fetch from 'cross-fetch';
+import semver from 'semver';
+import { spawnSync, execFile, execSync } from 'child_process';
+import yaml from 'yaml';
+import { downloadFile, niceBytes } from './download';
+import { getGithubFeedURL } from './github-provider';
+import { getGenericFeedURL } from './generic-provider';
+import { newBaseUrl, newUrlFromBase } from './utils';
 
-const path = require('path');
-const crypto = require('crypto');
-const fs = require('fs-extra');
-const fetch = require('cross-fetch');
-const semver = require('semver');
-const { spawnSync, execFile, execSync } = require('child_process');
-const yaml = require('yaml');
-
-const { downloadFile, niceBytes } = require('./download');
-
-const { getGithubFeedURL } = require('./github-provider');
-const { getGenericFeedURL } = require('./generic-provider');
-const { newBaseUrl, newUrlFromBase } = require('./utils');
-
-const { getStartURL, getWindow, dispatchEvent } = require('./splash');
+import { getStartURL, getWindow, dispatchEvent } from './splash';
 
 const { app, BrowserWindow, Notification } = electron;
 const oneMinute = 60 * 1000;
@@ -574,4 +571,4 @@ class DeltaUpdater extends EventEmitter {
   }
 }
 
-module.exports = DeltaUpdater;
+export default DeltaUpdater;
